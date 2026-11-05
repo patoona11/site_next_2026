@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-prompt), ui-sans-serif, system-ui, sans-serif;
+  --color-academic-navy: #153b56;
+  --color-academic-navy-light: #235f88;
+  --color-academic-gold: #52a9dc;
+  --color-academic-gold-light: #bde6f8;
+  --color-academic-gold-dark: #2476a8;
+  --color-tech-indigo: #318ec3;
+  --color-tech-indigo-light: #89cbed;
+  
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #102a3c;
+  
+  --color-background: var(--bg-color);
+  --color-foreground: var(--fg-color);
+}
+
+:root {
+  --bg-color: #f4f7f9;
+  --fg-color: #1f2937;
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
+
+.dark {
+  --bg-color: #ffffff;
+  --fg-color: #0f172a;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@utility nav-link {
+  @apply relative px-4 py-3.5 text-sm font-medium text-slate-700 transition-colors hover:text-[var(--color-academic-navy)];
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 0;
+  height: 2px;
+  background: var(--color-academic-gold);
+  transform: scaleX(0);
+  transition: transform 180ms ease;
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+@utility nav-dropdown {
+  @apply invisible absolute top-full z-50 translate-y-2 overflow-hidden rounded-b-xl border-t-2 border-[var(--color-academic-gold)] bg-white py-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100;
+}
+
+.nav-dropdown a {
+  display: block;
+  padding: 0.7rem 1rem;
+  color: #334155;
+  font-size: 0.875rem;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.nav-dropdown a:hover {
+  background: #eef7fc;
+  color: var(--color-academic-navy);
+}
+
+@utility mobile-nav-link {
+  @apply block rounded-xl px-4 py-2.5 font-medium text-slate-800 hover:bg-sky-50 hover:text-[var(--color-academic-gold-dark)];
+}
+
+@utility section-eyebrow {
+  @apply text-xs font-bold uppercase tracking-[0.22em] text-[var(--color-academic-gold-dark)];
+}
+
+@utility section-title {
+  @apply mt-2 text-3xl font-bold text-[var(--color-academic-navy)] sm:text-4xl;
+}
+
+@utility footer-title {
+  @apply mb-5 font-semibold text-white;
+}
+
+@utility footer-links {
+  @apply flex flex-col gap-3 text-sm text-slate-400;
+}
+
+.footer-links a {
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.footer-links a:hover {
+  color: white;
+  transform: translateX(3px);
+}
+
+/* Glassmorphism Utilities */
+@utility glass {
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+@utility glass-light {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+@utility glass-hover {
+  @apply transition-all duration-300;
+  &:hover {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+  }
+}
+
+.dark .glass-hover:hover {
+    background: rgba(30, 41, 59, 0.6);
+}
