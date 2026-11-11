@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-prompt), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-mali), ui-sans-serif, system-ui, sans-serif;
   --color-academic-navy: #153b56;
   --color-academic-navy-light: #235f88;
   --color-academic-gold: #52a9dc;

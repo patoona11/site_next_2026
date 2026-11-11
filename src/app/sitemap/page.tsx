@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, Building2, ChevronRight, FileText, Home, Map, Phone } from "lucide-react";
+import { BookOpen, Building2, ChevronRight, FileText, Home, Map, Newspaper, Phone } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
@@ -16,7 +16,7 @@ const sections = [
     links: [
       ["หน้าแรก", "/"],
       ["ประวัติความเป็นมา", "/about/history"],
-      ["ข่าวสารและกิจกรรม", "/#news"],
+      ["ข่าวสารและกิจกรรม", "/news"],
       ["บริการออนไลน์", "/#services"],
     ],
   },
@@ -30,6 +30,18 @@ const sections = [
       ["ระดับปริญญาตรี", "/programs/bachelor"],
       ["ระดับปริญญาโท", "/programs/master"],
       ["ระดับปริญญาเอก", "/programs/phd"],
+    ],
+  },
+  {
+    title: "ข่าวสารและโอกาส",
+    icon: Newspaper,
+    links: [
+      ["ข่าวสารและกิจกรรม", "/news"],
+      ["การเรียนรู้", "/news/learning"],
+      ["ข่าวรับสมัครงาน", "/news/jobs"],
+      ["ข่าวประกาศ", "/news/announcements"],
+      ["ทุนการศึกษา", "/scholarships"],
+      ["ปฏิทินกิจกรรม", "/calendar"],
     ],
   },
   {
@@ -60,7 +72,7 @@ export default function SitemapPage() {
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             {sections.map(({ title, icon: Icon, links }) => (
               <article key={title} className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
                 <div className="flex items-center gap-4 border-b border-slate-100 bg-gradient-to-r from-sky-50 to-white p-6">

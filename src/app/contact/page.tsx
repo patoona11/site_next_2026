@@ -3,8 +3,14 @@ import Footer from "@/components/Footer";
 import { CookieConsent } from "@/components/CookieConsent";
 import { MapPin, Phone, Mail, Globe, Printer } from "lucide-react";
 import Link from "next/link";
+import { getSiteSettings } from "@/lib/site-settings-store";
 
-export default function ContactPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ContactPage() {
+  const settings = await getSiteSettings();
+  const phoneLink = settings.phone.replace(/[^\d+]/g, "");
+  const publicRelationsPhoneLink = settings.publicRelationsPhone.replace(/[^\d+]/g, "");
   return (
     <>
       <Navigation />
@@ -13,7 +19,7 @@ export default function ContactPage() {
         <div className="bg-[var(--color-academic-navy)] text-white py-16 px-4">
           <div className="max-w-7xl mx-auto">
             <h1 className="text-4xl font-bold mb-4">ติดต่อเรา</h1>
-            <p className="text-xl text-gray-200">คณะเทคโนโลยีอุตสาหกรรม มหาวิทยาลัยนครพนม</p>
+            <p className="text-xl text-gray-200">{settings.facultyNameTh} {settings.universityNameTh}</p>
           </div>
         </div>
 
@@ -30,10 +36,9 @@ export default function ContactPage() {
             </div>
             
             <div className="text-gray-600 space-y-2 text-lg leading-relaxed">
-              <p className="font-semibold text-gray-900">คณะเทคโนโลยีอุตสาหกรรม</p>
-              <p className="font-semibold text-gray-900">มหาวิทยาลัยนครพนม</p>
-              <p>214 หมู่ 12 ต.หนองญาติ อ.เมือง</p>
-              <p>จ.นครพนม 48000</p>
+              <p className="font-semibold text-gray-900">{settings.facultyNameTh}</p>
+              <p className="font-semibold text-gray-900">{settings.universityNameTh}</p>
+              <p>{settings.address}</p>
             </div>
             <div className="w-full h-64 mt-8 rounded-xl overflow-hidden border border-gray-100">
               <iframe 
@@ -62,7 +67,7 @@ export default function ContactPage() {
                 <Phone className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-500">งานประชาสัมพันธ์</p>
-                  <p className="text-lg font-medium text-gray-900">095 189 9303</p>
+                  <a href={`tel:${publicRelationsPhoneLink}`} className="text-lg font-medium text-gray-900 hover:underline">{settings.publicRelationsPhone}</a>
                 </div>
               </div>
 
@@ -70,7 +75,7 @@ export default function ContactPage() {
                 <Phone className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-500">งานทะเบียนคณะ</p>
-                  <p className="text-lg font-medium text-gray-900">042 503 777</p>
+                  <a href={`tel:${phoneLink}`} className="text-lg font-medium text-gray-900 hover:underline">{settings.phone}</a>
                 </div>
               </div>
 
@@ -78,7 +83,7 @@ export default function ContactPage() {
                 <Printer className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-500">โทรศัพท์ / โทรสาร</p>
-                  <p className="text-lg font-medium text-gray-900">042 503 777</p>
+                  <a href={`tel:${phoneLink}`} className="text-lg font-medium text-gray-900 hover:underline">{settings.phone}</a>
                 </div>
               </div>
 
@@ -86,7 +91,7 @@ export default function ContactPage() {
                 <Mail className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-500">E-Mail</p>
-                  <a href="mailto:itech@npu.ac.th" className="text-lg font-medium text-[var(--color-academic-navy)] hover:underline">itech@npu.ac.th</a>
+                  <a href={`mailto:${settings.email}`} className="text-lg font-medium text-[var(--color-academic-navy)] hover:underline">{settings.email}</a>
                 </div>
               </div>
 
@@ -94,8 +99,8 @@ export default function ContactPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
                 <div>
                   <p className="text-sm text-gray-500">Facebook</p>
-                  <a href="https://www.facebook.com/people/%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B9%80%E0%B8%97%E0%B8%84%E0%B9%82%E0%B8%99%E0%B9%82%E0%B8%A5%E0%B8%A2%E0%B8%B5%E0%B8%AD%E0%B8%B8%E0%B8%95%E0%B8%AA%E0%B8%B2%E0%B8%AB%E0%B8%81%E0%B8%A3%E0%B8%A3%E0%B8%A1-%E0%B8%A1%E0%B8%AB%E0%B8%B2%E0%B8%A7%E0%B8%B4%E0%B8%97%E0%B8%A2%E0%B8%B2%E0%B8%A5%E0%B8%B1%E0%B8%A2%E0%B8%99%E0%B8%84%E0%B8%A3%E0%B8%9E%E0%B8%99%E0%B8%A1/100057388091241/" target="_blank" rel="noopener noreferrer" className="text-lg font-medium text-[var(--color-academic-navy)] hover:underline">
-                    คณะเทคโนโลยีอุตสาหกรรม
+                  <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-lg font-medium text-[var(--color-academic-navy)] hover:underline">
+                    {settings.facultyNameTh}
                   </a>
                 </div>
               </div>

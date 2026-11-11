@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Cpu, Globe2, Mail, Menu, Phone, Search, X } from "lucide-react";
+import { defaultSiteSettings, type SiteSettings } from "@/lib/site-settings-types";
 
 const programs = [
   ["ระดับ ปวช.", "/programs/vocational"],
@@ -12,16 +13,40 @@ const programs = [
   ["ระดับปริญญาเอก", "/programs/phd"],
 ] as const;
 
+const newsLinks = [
+  ["ข่าวทั้งหมด", "/news"],
+  ["ข่าวสารและกิจกรรม", "/news?category=news"],
+  ["การเรียนรู้", "/news?category=learning"],
+  ["ข่าวรับสมัครงาน", "/news/jobs"],
+  ["ข่าวประกาศ", "/news/announcements"],
+  ["ทุนการศึกษา", "/scholarships"],
+  ["ปฏิทิน", "/calendar"],
+] as const;
+
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
+  const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/settings", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("settings unavailable")))
+      .then((data: { settings?: Partial<SiteSettings> }) => {
+        if (active && data.settings) setSettings((current) => ({ ...current, ...data.settings }));
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+
+  const telephone = settings.phone.replace(/[^\d+]/g, "");
 
   return (
     <header className="relative z-50 w-full bg-white shadow-[0_1px_0_rgba(21,59,86,0.09)]">
       <div className="bg-[var(--color-academic-gold-dark)] text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 text-xs sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 sm:gap-6">
-            <a href="tel:042503777" className="flex items-center gap-1.5 hover:text-[var(--color-academic-gold-light)]"><Phone size={13} /> 042-503-777</a>
-            <a href="mailto:itech@npu.ac.th" className="hidden items-center gap-1.5 hover:text-[var(--color-academic-gold-light)] sm:flex"><Mail size={13} /> itech@npu.ac.th</a>
+            {settings.phone && <a href={`tel:${telephone}`} className="flex items-center gap-1.5 hover:text-[var(--color-academic-gold-light)]"><Phone size={13} /> {settings.phone}</a>}
+            {settings.email && <a href={`mailto:${settings.email}`} className="hidden items-center gap-1.5 hover:text-[var(--color-academic-gold-light)] sm:flex"><Mail size={13} /> {settings.email}</a>}
           </div>
           <div className="flex items-center gap-4">
             <Link href="/#services" className="hidden hover:text-[var(--color-academic-gold-light)] md:block">สำหรับนักศึกษา</Link>
@@ -37,15 +62,15 @@ export default function Navigation() {
             <Cpu className="h-8 w-8" strokeWidth={1.7} />
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-lg font-bold leading-tight text-[var(--color-academic-navy)] sm:text-2xl">คณะเทคโนโลยีอุตสาหกรรม</span>
-            <span className="mt-1 block truncate text-[11px] font-medium tracking-wide text-slate-500 sm:text-sm">FACULTY OF INDUSTRIAL TECHNOLOGY · NPU</span>
+            <span className="block truncate text-lg font-bold leading-tight text-[var(--color-academic-navy)] sm:text-2xl">{settings.facultyNameTh}</span>
+            <span className="mt-1 block truncate text-[11px] font-medium tracking-wide text-slate-500 sm:text-sm">{settings.facultyNameEn}</span>
           </span>
         </Link>
 
         <div className="hidden items-center gap-3 lg:flex">
           <label className="relative">
             <span className="sr-only">ค้นหาในเว็บไซต์</span>
-            <input type="search" placeholder="ค้นหาในเว็บไซต์" className="w-56 rounded-full border border-slate-200 bg-slate-50 py-2.5 pl-4 pr-10 text-sm text-slate-800 outline-none transition focus:border-[var(--color-academic-navy)] focus:bg-white" />
+            <input name="q" type="search" placeholder="ค้นหาข่าว" className="w-56 rounded-full border border-slate-200 bg-slate-50 py-2.5 pl-4 pr-10 text-sm text-slate-800 outline-none transition focus:border-[var(--color-academic-navy)] focus:bg-white" />
             <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           </label>
           <Link href="/#admissions" className="rounded-full bg-[var(--color-academic-gold-dark)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--color-academic-gold)]">สมัครเรียน</Link>
@@ -73,7 +98,10 @@ export default function Navigation() {
             <div className="nav-dropdown left-0 w-72">{programs.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}</div>
           </div>
           <Link href="/#admissions" className="nav-link">รับสมัครนักศึกษา</Link>
-          <Link href="/#news" className="nav-link">ข่าวและกิจกรรม</Link>
+          <div className="group relative">
+            <Link href="/news" className="nav-link flex items-center gap-1.5">ข่าวและกิจกรรม <ChevronDown size={14} /></Link>
+            <div className="nav-dropdown left-0 w-64">{newsLinks.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}</div>
+          </div>
           <Link href="/#research" className="nav-link">วิจัยและบริการวิชาการ</Link>
           <Link href="/#services" className="nav-link">บริการออนไลน์</Link>
           <Link href="/contact" className="nav-link">ติดต่อเรา</Link>
@@ -87,7 +115,8 @@ export default function Navigation() {
           <Link href="/programs" className="mobile-nav-link mt-1" onClick={() => setIsOpen(false)}>หลักสูตร</Link>
           <div className="grid grid-cols-2 gap-1 px-2">{programs.map(([label, href]) => <Link key={href} href={href} className="rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-sky-50" onClick={() => setIsOpen(false)}>{label}</Link>)}</div>
           <Link href="/#admissions" className="mobile-nav-link" onClick={() => setIsOpen(false)}>รับสมัครนักศึกษา</Link>
-          <Link href="/#news" className="mobile-nav-link" onClick={() => setIsOpen(false)}>ข่าวและกิจกรรม</Link>
+          <Link href="/news" className="mobile-nav-link" onClick={() => setIsOpen(false)}>ข่าวและกิจกรรม</Link>
+          <div className="grid grid-cols-2 gap-1 px-2">{newsLinks.slice(1).map(([label, href]) => <Link key={href} href={href} className="rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-sky-50" onClick={() => setIsOpen(false)}>{label}</Link>)}</div>
           <Link href="/#services" className="mobile-nav-link" onClick={() => setIsOpen(false)}>บริการออนไลน์</Link>
           <Link href="/contact" className="mobile-nav-link" onClick={() => setIsOpen(false)}>ติดต่อเรา</Link>
         </nav>

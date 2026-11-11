@@ -58,9 +58,9 @@ const mockData: CMSContent[] = [
 export async function fetchNewsAndAnnouncements(): Promise<CMSContent[]> {
   try {
     // Attempt to fetch from Supabase if configured
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    if (supabase) {
       const { data, error } = await supabase
-        .from('content')
+        .from('content_posts')
         .select('*')
         .order('published_at', { ascending: false });
         

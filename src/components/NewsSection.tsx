@@ -1,7 +1,10 @@
 import Image from "next/image";
 import { ArrowRight, Bell, CalendarDays, ChevronRight } from "lucide-react";
+import { formatThaiDate, postHref } from "@/lib/cms-presenters";
+import { getPublishedPosts } from "@/lib/content-store";
+import { categoryLabels } from "@/lib/cms-types";
 
-const newsItems = [
+const fallbackNewsItems = [
   {
     title: "พัฒนากำลังคนทักษะสูงด้านยานยนต์ไฟฟ้า ร่วมกับ มจพ.",
     date: "2 พ.ย. 2569",
@@ -25,14 +28,22 @@ const newsItems = [
   },
 ] as const;
 
-const announcements = [
-  ["คู่มืออาจารย์ที่ปรึกษา ปี 2569", "22 มิ.ย. 2569", "http://110.78.83.57/home/?p=3049"],
-  ["ประกาศผู้ชนะการคัดเลือกผู้ประกอบการให้บริการสนามกอล์ฟภูกระแต", "10 มิ.ย. 2569", "http://110.78.83.57/home/?p=2977"],
-  ["ประกาศการคัดเลือกผู้ประกอบการให้บริการสนามกอล์ฟภูกระแต", "2 มิ.ย. 2569", "http://110.78.83.57/home/?p=2963"],
-  ["ประกาศยกเลิกการคัดเลือกผู้ประกอบการให้บริการสนามกอล์ฟภูกระแต", "27 พ.ค. 2569", "http://110.78.83.57/home/?p=2955"],
+const fallbackAnnouncements = [
+  { title: "คู่มืออาจารย์ที่ปรึกษา ปี 2569", date: "22 มิ.ย. 2569", href: "http://110.78.83.57/home/?p=3049" },
+  { title: "ประกาศผู้ชนะการคัดเลือกผู้ประกอบการให้บริการสนามกอล์ฟภูกระแต", date: "10 มิ.ย. 2569", href: "http://110.78.83.57/home/?p=2977" },
+  { title: "ประกาศการคัดเลือกผู้ประกอบการให้บริการสนามกอล์ฟภูกระแต", date: "2 มิ.ย. 2569", href: "http://110.78.83.57/home/?p=2963" },
+  { title: "ประกาศยกเลิกการคัดเลือกผู้ประกอบการให้บริการสนามกอล์ฟภูกระแต", date: "27 พ.ค. 2569", href: "http://110.78.83.57/home/?p=2955" },
 ] as const;
 
-export default function NewsSection() {
+export default async function NewsSection() {
+  const [managedNews, managedAnnouncements] = await Promise.all([getPublishedPosts("news"), getPublishedPosts("announcements")]);
+  const newsItems = (managedNews.length > 0
+    ? managedNews.map((post) => ({ title: post.title, date: formatThaiDate(post.publishedAt), image: post.image || "/hero-industrial-v2.png", category: categoryLabels[post.category], href: postHref(post) }))
+    : [...fallbackNewsItems]).slice(0, 3);
+  const announcements = (managedAnnouncements.length > 0
+    ? managedAnnouncements.map((post) => ({ title: post.title, date: formatThaiDate(post.publishedAt), href: postHref(post) }))
+    : [...fallbackAnnouncements]).slice(0, 4);
+
   return (
     <section id="news" className="bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -42,14 +53,14 @@ export default function NewsSection() {
             <h2 className="section-title">ข่าวสารและกิจกรรม</h2>
             <p className="mt-2 max-w-2xl text-slate-500">ติดตามข่าวประชาสัมพันธ์ กิจกรรมนักศึกษา และความเคลื่อนไหวของคณะ</p>
           </div>
-          <a href="http://110.78.83.57/home/" target="_blank" rel="noopener noreferrer" className="hidden items-center gap-2 text-sm font-semibold text-[var(--color-academic-navy)] hover:text-[var(--color-academic-gold-dark)] sm:flex">ดูข่าวทั้งหมด <ArrowRight size={17} /></a>
+          <a href="/news" className="hidden items-center gap-2 text-sm font-semibold text-[var(--color-academic-navy)] hover:text-[var(--color-academic-gold-dark)] sm:flex">ดูข่าวทั้งหมด <ArrowRight size={17} /></a>
         </div>
 
         <div className="grid gap-8 xl:grid-cols-[1fr_360px]">
           <div className="grid gap-6 md:grid-cols-2">
             {newsItems.map((news, index) => (
               <article key={news.title} className={`group overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${index === 0 ? "md:col-span-2" : ""}`}>
-                <a href={news.href} target="_blank" rel="noopener noreferrer" className="block h-full" aria-label={`อ่านข่าว: ${news.title}`}>
+                <a href={news.href} target={news.href.startsWith("http") ? "_blank" : undefined} rel={news.href.startsWith("http") ? "noopener noreferrer" : undefined} className="block h-full" aria-label={`อ่านข่าว: ${news.title}`}>
                   <div className={`relative overflow-hidden ${index === 0 ? "h-72" : "h-52"}`}>
                     <Image src={news.image} alt={news.title} fill sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"} className="object-cover transition duration-700 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
@@ -78,17 +89,17 @@ export default function NewsSection() {
               <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-white/10"><Bell size={20} /></span><div><p className="text-xs uppercase tracking-wider text-sky-200">Announcements</p><h3 className="text-xl font-bold">ข่าวประกาศ</h3></div></div>
             </div>
             <div className="divide-y divide-white/10 px-6">
-              {announcements.map(([title, date, href]) => (
-                <a key={title} href={href} target="_blank" rel="noopener noreferrer" className="group block py-5">
+              {announcements.map(({ title, date, href }) => (
+                <a key={`${title}-${date}`} href={href} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noopener noreferrer" : undefined} className="group block py-5">
                   <p className="text-xs text-[var(--color-academic-gold-light)]">{date}</p>
                   <p className="mt-2 leading-6 text-sky-50 transition group-hover:text-white">{title}</p>
                 </a>
               ))}
             </div>
-            <a href="http://110.78.83.57/home/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 bg-white/[0.08] px-6 py-4 text-sm font-semibold transition hover:bg-white/15">ดูประกาศทั้งหมด <ArrowRight size={16} /></a>
+            <a href="/news/announcements" className="flex items-center justify-center gap-2 bg-white/[0.08] px-6 py-4 text-sm font-semibold transition hover:bg-white/15">ดูประกาศทั้งหมด <ArrowRight size={16} /></a>
           </aside>
         </div>
-        <p className="mt-6 text-right text-xs text-slate-400">ข้อมูลข่าวจากเว็บไซต์คณะเทคโนโลยีอุตสาหกรรม มหาวิทยาลัยนครพนม</p>
+        <p className="mt-6 text-right text-xs text-slate-400">ข้อมูลจากระบบจัดการเนื้อหาและเว็บไซต์เดิมของคณะเทคโนโลยีอุตสาหกรรม มหาวิทยาลัยนครพนม</p>
       </div>
     </section>
   );

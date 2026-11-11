@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Prompt } from "next/font/google";
+import { Mali } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import CampusChat from "@/components/CampusChat";
 import "./globals.css";
 
-const prompt = Prompt({
-  variable: "--font-prompt",
+const mali = Mali({
+  variable: "--font-mali",
   weight: ["300", "400", "500", "600", "700"],
   subsets: ["latin", "thai"],
 });
@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   },
   description: "เว็บไซต์คณะเทคโนโลยีอุตสาหกรรม มหาวิทยาลัยนครพนม (Faculty of Industrial Technology, Nakhon Phanom University)",
   keywords: ["คณะเทคโนโลยีอุตสาหกรรม", "มหาวิทยาลัยนครพนม", "NPU", "เรียนต่อ", "อาชีวศึกษา"],
+  alternates: {
+    types: { "application/rss+xml": "/feed.xml" },
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +30,8 @@ export default function RootLayout({
   return (
     <html
       lang="th"
-      className={`${prompt.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
+      className={`${mali.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">

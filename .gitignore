@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# CMS uploads (keep the directory, not user-uploaded media)
+/public/uploads/*
+!/public/uploads/.gitkeep

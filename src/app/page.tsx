@@ -6,6 +6,8 @@ import FacultyHighlights from "@/components/FacultyHighlights";
 import Footer from "@/components/Footer";
 import { CookieConsent } from "@/components/CookieConsent";
 
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   return (
     <>
