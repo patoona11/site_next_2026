@@ -24,7 +24,7 @@ function validSignature(buffer: Buffer, type: string) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAdminRequest(request) || !isSameOrigin(request)) return NextResponse.json({ error: "กรุณาเข้าสู่ระบบผู้ดูแล" }, { status: 401 });
+  if (!await isAdminRequest(request) || !isSameOrigin(request)) return NextResponse.json({ error: "กรุณาเข้าสู่ระบบผู้ดูแล" }, { status: 401 });
 
   const formData = await request.formData();
   const file = formData.get("file");

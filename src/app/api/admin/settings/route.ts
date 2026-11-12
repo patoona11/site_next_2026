@@ -10,12 +10,12 @@ function unauthorized() {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAdminRequest(request)) return unauthorized();
+  if (!await isAdminRequest(request)) return unauthorized();
   return NextResponse.json({ settings: await getSiteSettings() }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function PUT(request: NextRequest) {
-  if (!isAdminRequest(request) || !isSameOrigin(request)) return unauthorized();
+  if (!await isAdminRequest(request) || !isSameOrigin(request)) return unauthorized();
   try {
     const settings = await updateSiteSettings(await request.json());
     return NextResponse.json({ settings });

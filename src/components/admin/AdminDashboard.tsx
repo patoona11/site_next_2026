@@ -27,7 +27,7 @@ function dateTimeInputValue(value: string) {
 }
 
 async function responseData(response: Response) {
-  const data = await response.json().catch(() => ({})) as { error?: string; posts?: ContentPost[]; post?: ContentPost; url?: string; configured?: boolean; authenticated?: boolean; backend?: "local" | "supabase"; backendConfigured?: boolean };
+  const data = await response.json().catch(() => ({})) as { error?: string; posts?: ContentPost[]; post?: ContentPost; url?: string; configured?: boolean; authenticated?: boolean; backend?: "local" | "supabase"; backendConfigured?: boolean; authMode?: "password" | "supabase" };
   if (!response.ok) throw new Error(data.error || "เกิดข้อผิดพลาด กรุณาลองใหม่");
   return data;
 }
@@ -44,6 +44,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [credentials, setCredentials] = useState({ username: "admin", password: "" });
   const [backend, setBackend] = useState<"local" | "supabase">("local");
+  const [authMode, setAuthMode] = useState<"password" | "supabase">("password");
   const [setupIssue, setSetupIssue] = useState<"admin" | "supabase">("admin");
   const [section, setSection] = useState<"posts" | "import" | "settings">("posts");
   const [query, setQuery] = useState("");
@@ -62,6 +63,8 @@ export default function AdminDashboard() {
       .then(async (data) => {
         if (!active) return;
         setBackend(data.backend || "local");
+        setAuthMode(data.authMode || "password");
+        if (data.authMode === "supabase") setCredentials({ username: "", password: "" });
         if (!data.configured) {
           setSetupIssue("admin");
           return setScreen("unconfigured");
@@ -221,7 +224,11 @@ export default function AdminDashboard() {
           {setupIssue === "supabase" ? (
             <pre className="mt-5 overflow-x-auto rounded-2xl bg-black/35 p-5 text-sm leading-7 text-sky-100">CMS_BACKEND=supabase{"\n"}NEXT_PUBLIC_SUPABASE_URL=https://…supabase.co{"\n"}SUPABASE_SECRET_KEY=sb_secret_…</pre>
           ) : (
-            <pre className="mt-5 overflow-x-auto rounded-2xl bg-black/35 p-5 text-sm leading-7 text-sky-100">ADMIN_USERNAME=admin{"\n"}ADMIN_PASSWORD=รหัสผ่านอย่างน้อย-8-ตัว{"\n"}ADMIN_SESSION_SECRET=สุ่มข้อความยาวอย่างน้อย-32-ตัว</pre>
+            authMode === "supabase" ? (
+              <pre className="mt-5 overflow-x-auto rounded-2xl bg-black/35 p-5 text-sm leading-7 text-sky-100">ADMIN_AUTH_MODE=supabase{"\n"}ADMIN_EMAIL_ALLOWLIST=admin@example.ac.th{"\n"}NEXT_PUBLIC_SUPABASE_URL=https://…supabase.co{"\n"}NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_…</pre>
+            ) : (
+              <pre className="mt-5 overflow-x-auto rounded-2xl bg-black/35 p-5 text-sm leading-7 text-sky-100">ADMIN_USERNAME=admin{"\n"}ADMIN_PASSWORD=รหัสผ่านอย่างน้อย-8-ตัว{"\n"}ADMIN_SESSION_SECRET=สุ่มข้อความยาวอย่างน้อย-32-ตัว</pre>
+            )
           )}
           <a href="/" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-sky-300 hover:text-white"><ChevronLeft size={16} />กลับหน้าเว็บไซต์</a>
         </section>
@@ -235,7 +242,7 @@ export default function AdminDashboard() {
         <form onSubmit={login} className="w-full max-w-md rounded-3xl border border-white/10 bg-white p-7 shadow-2xl sm:p-9">
           <div className="flex items-center gap-4"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--color-academic-navy)] text-white"><BookOpenText size={25} /></span><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">ITECH NPU CMS</p><h1 className="text-2xl font-bold text-slate-900">เข้าสู่ระบบผู้ดูแล</h1></div></div>
           <p className="mt-6 text-sm leading-6 text-slate-500">จัดการข่าว ประกาศ งาน ทุนการศึกษา และกิจกรรมของคณะ</p>
-          <label className="mt-6 block text-sm font-semibold text-slate-700">ชื่อผู้ใช้<input value={credentials.username} onChange={(event) => setCredentials((current) => ({ ...current, username: event.target.value }))} autoComplete="username" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500" /></label>
+          <label className="mt-6 block text-sm font-semibold text-slate-700">{authMode === "supabase" ? "อีเมลผู้ดูแล" : "ชื่อผู้ใช้"}<input type={authMode === "supabase" ? "email" : "text"} value={credentials.username} onChange={(event) => setCredentials((current) => ({ ...current, username: event.target.value }))} autoComplete="username" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500" /></label>
           <label className="mt-4 block text-sm font-semibold text-slate-700">รหัสผ่าน<input type="password" value={credentials.password} onChange={(event) => setCredentials((current) => ({ ...current, password: event.target.value }))} autoComplete="current-password" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500" /></label>
           {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
           <button disabled={busy} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-academic-navy)] px-5 py-3.5 font-semibold text-white transition hover:bg-[var(--color-academic-navy-light)] disabled:opacity-50">{busy ? <LoaderCircle className="animate-spin" size={18} /> : <ShieldCheck size={18} />}เข้าสู่ระบบ</button>

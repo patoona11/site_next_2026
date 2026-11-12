@@ -2,9 +2,15 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import type { User } from "@supabase/supabase-js";
 
 export const adminCookieName = "itech_admin_session";
 const sessionDurationMs = 8 * 60 * 60 * 1000;
+
+export function getAdminAuthMode() {
+  return process.env.ADMIN_AUTH_MODE?.trim().toLowerCase() === "supabase" ? "supabase" : "password";
+}
 
 function config() {
   return {
@@ -25,6 +31,11 @@ function signature(payload: string, secret: string) {
 }
 
 export function isAdminConfigured() {
+  if (getAdminAuthMode() === "supabase") {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "";
+    const key = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
+    return /^https:\/\//.test(url) && key.length > 20 && adminEmailAllowlist().size > 0;
+  }
   const { password, secret } = config();
   return password.length >= 8 && secret.length >= 32;
 }
@@ -47,8 +58,29 @@ export function verifyAdminSessionToken(token: string | undefined) {
   return safeEqual(receivedSignature, signature(expiresAt, config().secret));
 }
 
-export function isAdminRequest(request: NextRequest) {
-  return verifyAdminSessionToken(request.cookies.get(adminCookieName)?.value);
+function adminEmailAllowlist() {
+  return new Set((process.env.ADMIN_EMAIL_ALLOWLIST || "").split(",").map((email) => email.trim().toLowerCase()).filter(Boolean));
+}
+
+export function isAllowedSupabaseAdmin(user: User | null) {
+  if (!user?.email) return false;
+  return adminEmailAllowlist().has(user.email.toLowerCase());
+}
+
+export async function isAdminRequest(request: NextRequest) {
+  if (getAdminAuthMode() === "password") return verifyAdminSessionToken(request.cookies.get(adminCookieName)?.value);
+  if (!isAdminConfigured()) return false;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const supabase = createServerClient(url, key, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll: () => undefined,
+    },
+  });
+  const { data, error } = await supabase.auth.getUser();
+  return !error && isAllowedSupabaseAdmin(data.user);
 }
 
 export function isSameOrigin(request: NextRequest) {

@@ -24,7 +24,7 @@ async function sourceItems(source: SocialImportSource) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAdminRequest(request)) return unauthorized();
+  if (!await isAdminRequest(request)) return unauthorized();
   const settings = await getSiteSettings();
   return NextResponse.json({
     facebookConfigured: isFacebookImportConfigured(),
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAdminRequest(request) || !isSameOrigin(request)) return unauthorized();
+  if (!await isAdminRequest(request) || !isSameOrigin(request)) return unauthorized();
   try {
     const body = await request.json() as { action?: string; source?: unknown; itemId?: unknown; category?: unknown };
     const source = getSource(body.source);
