@@ -11,7 +11,15 @@ let publicClientIdentity = "";
 let bucketSetup: Promise<void> | null = null;
 
 export function getCmsBackend(): CmsBackend {
-  return process.env.CMS_BACKEND?.trim().toLowerCase() === "supabase" ? "supabase" : "local";
+  const configuredBackend = process.env.CMS_BACKEND?.trim().toLowerCase();
+  if (configuredBackend === "supabase" || configuredBackend === "local") return configuredBackend;
+
+  // Vercel Functions have a read-only application filesystem. Never fall back
+  // to the JSON-file backend there, because writes to /var/task will fail.
+  if (process.env.VERCEL === "1" || process.env.VERCEL_ENV) return "supabase";
+
+  const { url, secretKey } = supabaseSettings();
+  return /^https:\/\//.test(url) && secretKey.length > 20 ? "supabase" : "local";
 }
 
 function supabaseSettings() {

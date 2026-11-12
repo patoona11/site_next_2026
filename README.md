@@ -100,7 +100,21 @@ Page Access Token เป็นความลับฝั่งเซิร์�
 
 `SUPABASE_SECRET_KEY` ใช้เฉพาะ Route Handler ฝั่งเซิร์ฟเวอร์ ห้ามตั้งชื่อขึ้นต้นด้วย `NEXT_PUBLIC_` ห้ามใส่ใน source control และห้ามส่งเป็น Docker build argument ระบบยังรองรับชื่อเดิม `SUPABASE_SERVICE_ROLE_KEY` สำหรับโปรเจกต์ Supabase รุ่นเก่า
 
-หากยังไม่มี secret key ให้คง `CMS_BACKEND=local` ไว้ก่อน Publishable key เพียงอย่างเดียวสามารถใช้ Supabase Auth และอ่านแถวที่ RLS อนุญาตได้ แต่ไม่ควรเปิดสิทธิ์เขียนแบบ anonymous ให้หน้า Admin
+หากยังไม่มี secret key สามารถใช้ `CMS_BACKEND=local` ได้เฉพาะการรันบนเครื่องหรือ Docker ที่ผูก persistent volume เท่านั้น Publishable key เพียงอย่างเดียวสามารถใช้ Supabase Auth และอ่านแถวที่ RLS อนุญาตได้ แต่ไม่ควรเปิดสิทธิ์เขียนแบบ anonymous ให้หน้า Admin
+
+### Deploy บน Vercel
+
+Vercel Functions ไม่อนุญาตให้เขียนไฟล์ลง `/var/task` ดังนั้นระบบ CMS บน Vercel ต้องใช้ Supabase เท่านั้น ให้เพิ่มตัวแปรต่อไปนี้ใน Project Settings > Environments > Production แล้ว Redeploy:
+
+```env
+CMS_BACKEND=supabase
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+SUPABASE_SECRET_KEY=your-secret-key
+SUPABASE_STORAGE_BUCKET=cms-media
+```
+
+หากไม่ได้กำหนด `CMS_BACKEND` ระบบจะเลือก Supabase ให้อัตโนมัติเมื่อทำงานบน Vercel และจะแจ้งว่าการตั้งค่า Supabase ยังไม่ครบแทนการพยายามเขียนไฟล์ local
 
 ## คำสั่งตรวจสอบ
 
