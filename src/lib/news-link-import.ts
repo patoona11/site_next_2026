@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { ensureSupabaseCmsBucket, getCmsBackend, getSupabaseCmsClient, getSupabaseStorageBucket } from "@/lib/supabase-server";
-import type { NewsLinkPreview } from "@/lib/social-import-types";
+import type { NewsLinkPreview, SocialImportItem } from "@/lib/social-import-types";
 
 const maximumHtmlBytes = 2_000_000;
 const maximumImageBytes = 5 * 1024 * 1024;
@@ -149,7 +149,7 @@ function validImageSignature(buffer: Buffer, type: string) {
   return false;
 }
 
-async function copyImageToCms(imageUrl: string) {
+export async function copyNewsImageToCms(imageUrl: string) {
   if (!imageUrl || getCmsBackend() !== "supabase") return "";
   try {
     const { response } = await fetchWithSafeRedirects(imageUrl, "image/jpeg,image/png,image/webp,image/gif");
@@ -192,8 +192,12 @@ export async function fetchNewsLinkPreview(value: string): Promise<NewsLinkPrevi
   const rawImage = metaContent(html, ["og:image:secure_url", "og:image", "twitter:image"]) || firstJsonString(jsonLd, ["image", "thumbnailUrl"]);
   const sourceImage = absoluteUrl(rawImage, finalUrl);
 
+  const isFacebook = ["facebook.com", "www.facebook.com", "m.facebook.com"].includes(finalUrl.hostname.toLowerCase());
+  if (isFacebook && (finalUrl.pathname.startsWith("/login") || (title.toLowerCase() === "facebook" && !description && !body))) {
+    throw new Error("Facebook ซ่อนเนื้อหาไว้หลังหน้าเข้าสู่ระบบ กรุณาเชื่อม Facebook Graph API หรือเพิ่ม RSS URL ก่อนดึงโพสต์นี้");
+  }
   if (!title) throw new Error("ไม่พบชื่อข่าวในลิงก์นี้ กรุณาลองลิงก์หน้าข่าวโดยตรง");
-  const image = await copyImageToCms(sourceImage);
+  const image = await copyNewsImageToCms(sourceImage);
   return {
     title,
     excerpt: description || body.slice(0, 600),
@@ -202,5 +206,18 @@ export async function fetchNewsLinkPreview(value: string): Promise<NewsLinkPrevi
     publishedAt: Number.isNaN(parsedDate) ? new Date().toISOString() : new Date(parsedDate).toISOString(),
     image,
     sourceImage,
+  };
+}
+
+export async function newsLinkPreviewFromSocialItem(item: SocialImportItem): Promise<NewsLinkPreview> {
+  const image = await copyNewsImageToCms(item.imageUrl);
+  return {
+    title: item.title,
+    excerpt: item.description.slice(0, 600),
+    body: item.description,
+    externalUrl: item.url,
+    publishedAt: item.publishedAt,
+    image,
+    sourceImage: item.imageUrl,
   };
 }

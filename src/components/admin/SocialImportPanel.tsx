@@ -134,7 +134,7 @@ export default function SocialImportPanel({ onImported, onManualCreate, onOpenSe
       <form onSubmit={manualImport} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex items-center gap-3"><FileInput className="text-sky-700" size={22} /><div><h3 className="font-bold text-slate-900">วางลิงก์ แล้วดึงข้อมูลข่าวอัตโนมัติ</h3><p className="text-sm text-slate-500">รองรับเว็บไซต์ข่าวและโพสต์สาธารณะ ระบบจะดึงชื่อเรื่อง คำโปรย เนื้อหา วันที่ รูปปก และลิงก์ต้นฉบับมาให้ตรวจแก้</p></div></div>
         <div className="mt-4 flex flex-col gap-2 sm:flex-row"><input required type="url" value={manualUrl} onChange={(event) => setManualUrl(event.target.value)} placeholder="https://เว็บไซต์ต้นทาง/ข่าว/…" className="min-w-0 flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-sky-500" /><button disabled={extracting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-50 px-5 py-3 text-sm font-semibold text-sky-800 disabled:opacity-50">{extracting ? <LoaderCircle className="animate-spin" size={17} /> : <FileInput size={17} />}{extracting ? "กำลังดึงข่าว" : "ดึงข่าวมาเขียน"}</button></div>
-        <p className="mt-3 text-xs leading-5 text-slate-400">ข่าวจะเปิดในตัวแก้ไขเป็นฉบับร่างก่อนเสมอ หากเว็บไซต์ต้นทางป้องกันการดึงข้อมูล สามารถกรอกหรืออัปโหลดภาพเพิ่มเติมเองได้</p>
+        <p className="mt-3 text-xs leading-5 text-slate-400">ข่าวจะเปิดในตัวแก้ไขเป็นฉบับร่างก่อนเสมอ · ลิงก์ Facebook ต้องเชื่อม Graph API หรือ RSS.app เพราะ Facebook ส่งหน้าเข้าสู่ระบบแทนเนื้อหาโพสต์เมื่อเซิร์ฟเวอร์เปิดลิงก์โดยตรง</p>
       </form>
 
       {items.length > 0 && <div className="space-y-4">
