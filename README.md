@@ -123,7 +123,7 @@ SUPABASE_SECRET_KEY=your-secret-key
 SUPABASE_STORAGE_BUCKET=cms-media
 ```
 
-หากไม่ได้กำหนด `CMS_BACKEND` ระบบจะเลือก Supabase ให้อัตโนมัติเมื่อทำงานบน Vercel และจะแจ้งว่าการตั้งค่า Supabase ยังไม่ครบแทนการพยายามเขียนไฟล์ local
+เมื่อทำงานบน Vercel ระบบจะบังคับใช้ Supabase เสมอ แม้มีตัวแปรเก่า `CMS_BACKEND=local` เพื่อป้องกันข้อผิดพลาด `EROFS` จากการเขียนไฟล์ลง `/var/task` หากการตั้งค่า Supabase ยังไม่ครบ หน้า Admin จะแจ้งตัวแปรที่ขาดแทนการพยายามใช้ไฟล์ local
 
 ## Local AI ด้วย Ollama
 
