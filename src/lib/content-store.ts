@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { contentCategories, contentStatuses, type ContentCategory, type ContentPost, type ContentPostInput } from "@/lib/cms-types";
-import { getCmsBackend, getSupabaseCmsClient, getSupabasePublicClient, isAllowedSupabaseImageUrl } from "@/lib/supabase-server";
+import { getCmsBackend, getSupabaseCmsClient, getSupabasePublicClient, isAllowedSupabaseImageUrl, isReadOnlyServerlessRuntime } from "@/lib/supabase-server";
 
 type ContentDatabase = { posts: ContentPost[] };
 type ContentPostRow = {
@@ -45,6 +45,9 @@ async function readDatabase(): Promise<ContentDatabase> {
 }
 
 async function writeDatabase(database: ContentDatabase) {
+  if (isReadOnlyServerlessRuntime()) {
+    throw new Error("Vercel ไม่รองรับการบันทึกข่าวลงไฟล์ local กรุณาตั้งค่า Supabase ให้ครบแล้ว Redeploy");
+  }
   await ensureDatabase();
   const temporaryFile = `${contentFile}.${randomUUID()}.tmp`;
   await fs.writeFile(temporaryFile, JSON.stringify(database, null, 2), "utf8");

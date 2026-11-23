@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { defaultSiteSettings, type SiteSettings } from "@/lib/site-settings-types";
-import { getCmsBackend, getSupabaseCmsClient } from "@/lib/supabase-server";
+import { getCmsBackend, getSupabaseCmsClient, isReadOnlyServerlessRuntime } from "@/lib/supabase-server";
 
 type SiteSettingsRow = {
   faculty_name_th: string;
@@ -111,6 +111,9 @@ async function getLocalSettings() {
 }
 
 async function updateLocalSettings(settings: SiteSettings) {
+  if (isReadOnlyServerlessRuntime()) {
+    throw new Error("Vercel ไม่รองรับการบันทึกข้อมูลเว็บไซต์ลงไฟล์ local กรุณาตั้งค่า Supabase ให้ครบแล้ว Redeploy");
+  }
   await fs.mkdir(dataDirectory, { recursive: true });
   const temporaryFile = `${settingsFile}.${randomUUID()}.tmp`;
   await fs.writeFile(temporaryFile, JSON.stringify(settings, null, 2), "utf8");

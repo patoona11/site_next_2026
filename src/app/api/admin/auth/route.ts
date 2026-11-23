@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { adminCookieName, createAdminSessionToken, getAdminAuthMode, isAdminConfigured, isAdminRequest, isAllowedSupabaseAdmin, isSameOrigin, verifyAdminCredentials } from "@/lib/admin-auth";
-import { getCmsBackend, isSupabaseCmsConfigured } from "@/lib/supabase-server";
+import { getCmsBackend, isReadOnlyServerlessRuntime, isSupabaseCmsConfigured } from "@/lib/supabase-server";
 import { createClient } from "@/utils/supabase/server";
 
 export const runtime = "nodejs";
@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
     authMode: getAdminAuthMode(),
     backend,
     backendConfigured: backend === "local" || isSupabaseCmsConfigured(),
+    serverless: isReadOnlyServerlessRuntime(),
+    deployment: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || process.env.VERCEL_DEPLOYMENT_ID || "local",
   });
 }
 

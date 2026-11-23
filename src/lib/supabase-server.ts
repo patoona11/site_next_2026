@@ -10,11 +10,26 @@ let publicClient: SupabaseClient | null = null;
 let publicClientIdentity = "";
 let bucketSetup: Promise<void> | null = null;
 
+export function isReadOnlyServerlessRuntime() {
+  const cwd = process.cwd().replace(/\\/g, "/").toLowerCase();
+  const lambdaTaskRoot = (process.env.LAMBDA_TASK_ROOT || "").replace(/\\/g, "/").toLowerCase();
+  return Boolean(
+    process.env.VERCEL === "1"
+    || process.env.VERCEL_ENV
+    || process.env.VERCEL_REGION
+    || process.env.AWS_LAMBDA_FUNCTION_NAME
+    || cwd === "/var/task"
+    || cwd.startsWith("/var/task/")
+    || lambdaTaskRoot === "/var/task"
+    || lambdaTaskRoot.startsWith("/var/task/"),
+  );
+}
+
 export function getCmsBackend(): CmsBackend {
   // Vercel Functions have a read-only application filesystem. This guard must
   // run before CMS_BACKEND so a stale `CMS_BACKEND=local` setting can never
   // send production writes to /var/task.
-  if (process.env.VERCEL === "1" || process.env.VERCEL_ENV) return "supabase";
+  if (isReadOnlyServerlessRuntime()) return "supabase";
 
   const configuredBackend = process.env.CMS_BACKEND?.trim().toLowerCase();
   if (configuredBackend === "supabase" || configuredBackend === "local") return configuredBackend;
