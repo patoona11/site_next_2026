@@ -3,6 +3,8 @@ import { ArrowRight, Bell, CalendarDays, ChevronRight } from "lucide-react";
 import { formatThaiDate, postHref } from "@/lib/cms-presenters";
 import { getPublishedPosts } from "@/lib/content-store";
 import { categoryLabels } from "@/lib/cms-types";
+import { getSiteSettings } from "@/lib/site-settings-store";
+import { fetchRssItems } from "@/lib/social-import";
 
 const fallbackNewsItems = [
   {
@@ -36,10 +38,27 @@ const fallbackAnnouncements = [
 ] as const;
 
 export default async function NewsSection() {
-  const [managedNews, managedAnnouncements] = await Promise.all([getPublishedPosts("news"), getPublishedPosts("announcements")]);
-  const newsItems = (managedNews.length > 0
-    ? managedNews.map((post) => ({ title: post.title, date: formatThaiDate(post.publishedAt), image: post.image || "/hero-industrial-v2.png", category: categoryLabels[post.category], href: postHref(post) }))
-    : [...fallbackNewsItems]).slice(0, 3);
+  const [managedNews, managedAnnouncements, settings] = await Promise.all([getPublishedPosts("news"), getPublishedPosts("announcements"), getSiteSettings()]);
+  const managedNewsItems = managedNews.map((post) => ({ title: post.title, date: formatThaiDate(post.publishedAt), image: post.image || "/hero-industrial-v2.png", category: categoryLabels[post.category], href: postHref(post), isRss: false }));
+  let rssNewsItems: Array<{ title: string; date: string; image: string; category: string; href: string; isRss: boolean }> = [];
+  if (settings.facebookRssUrl) {
+    try {
+      rssNewsItems = (await fetchRssItems(settings.facebookRssUrl)).map((item) => ({
+        title: item.title,
+        date: formatThaiDate(item.publishedAt),
+        image: item.imageUrl || "/hero-industrial-v2.png",
+        category: "ข่าวจาก Facebook · RSS",
+        href: item.url,
+        isRss: true,
+      }));
+    } catch (error) {
+      console.error("Homepage RSS feed unavailable", error instanceof Error ? error.message : error);
+    }
+  }
+  const uniqueNews = [...rssNewsItems, ...managedNewsItems].filter((item, index, items) => items.findIndex((candidate) => candidate.href === item.href) === index);
+  const newsItems = (uniqueNews.length > 0
+    ? uniqueNews
+    : fallbackNewsItems.map((item) => ({ ...item, isRss: false }))).slice(0, 3);
   const announcements = (managedAnnouncements.length > 0
     ? managedAnnouncements.map((post) => ({ title: post.title, date: formatThaiDate(post.publishedAt), href: postHref(post) }))
     : [...fallbackAnnouncements]).slice(0, 4);
@@ -62,7 +81,11 @@ export default async function NewsSection() {
               <article key={news.title} className={`group overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${index === 0 ? "md:col-span-2" : ""}`}>
                 <a href={news.href} target={news.href.startsWith("http") ? "_blank" : undefined} rel={news.href.startsWith("http") ? "noopener noreferrer" : undefined} className="block h-full" aria-label={`อ่านข่าว: ${news.title}`}>
                   <div className={`relative overflow-hidden ${index === 0 ? "h-72" : "h-52"}`}>
-                    <Image src={news.image} alt={news.title} fill sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"} className="object-cover transition duration-700 group-hover:scale-105" />
+                    {news.image.startsWith("http") && news.isRss ? (
+                      <div role="img" aria-label={news.title} className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105" style={{ backgroundImage: `url(${JSON.stringify(news.image)})` }} />
+                    ) : (
+                      <Image src={news.image} alt={news.title} fill sizes={index === 0 ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 100vw, 25vw"} className="object-cover transition duration-700 group-hover:scale-105" />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
                     <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-[var(--color-academic-navy)] shadow-sm">{news.category}</span>
                     {index === 0 && (
@@ -99,7 +122,7 @@ export default async function NewsSection() {
             <a href="/news/announcements" className="flex items-center justify-center gap-2 bg-white/[0.08] px-6 py-4 text-sm font-semibold transition hover:bg-white/15">ดูประกาศทั้งหมด <ArrowRight size={16} /></a>
           </aside>
         </div>
-        <p className="mt-6 text-right text-xs text-slate-400">ข้อมูลจากระบบจัดการเนื้อหาและเว็บไซต์เดิมของคณะเทคโนโลยีอุตสาหกรรม มหาวิทยาลัยนครพนม</p>
+        <p className="mt-6 text-right text-xs text-slate-400">{rssNewsItems.length > 0 ? "อัปเดตอัตโนมัติจาก Facebook RSS และระบบจัดการเนื้อหาของคณะ" : "ข้อมูลจากระบบจัดการเนื้อหาและเว็บไซต์เดิมของคณะเทคโนโลยีอุตสาหกรรม มหาวิทยาลัยนครพนม"}</p>
       </div>
     </section>
   );

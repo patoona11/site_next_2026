@@ -122,7 +122,11 @@ export function parseRssItems(xml: string): SocialImportItem[] {
     const rawTitle = stripMarkup(elementValue(block, ["title"]));
     const id = cleanText(stripMarkup(elementValue(block, ["guid", "id"])) || url || `rss-${index}`, 500);
     const publishedAt = safeDate(elementValue(block, ["pubDate", "published", "updated", "dc:date"]));
-    const imageUrl = safeHttpUrl(attributeValue(block, ["media:content", "media:thumbnail", "enclosure"], "url"));
+    const imageUrl = safeHttpUrl(
+      attributeValue(block, ["media:content", "media:thumbnail", "enclosure"], "url")
+      || attributeValue(rawDescription, ["img"], "src")
+      || attributeValue(block, ["img"], "src"),
+    );
     return [{
       id,
       title: cleanText(rawTitle || titleFromDescription(description), 240),
