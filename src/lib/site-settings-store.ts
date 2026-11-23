@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { defaultSiteSettings, type SiteSettings } from "@/lib/site-settings-types";
-import { getCmsBackend, getSupabaseCmsClient, isReadOnlyServerlessRuntime } from "@/lib/supabase-server";
+import { getCmsBackend, getSupabaseCmsClient, isReadOnlyServerlessRuntime, isSupabaseCmsConfigured } from "@/lib/supabase-server";
 
 type SiteSettingsRow = {
   faculty_name_th: string;
@@ -150,7 +150,10 @@ async function updateSupabaseSettings(settings: SiteSettings) {
 }
 
 export function getSiteSettings() {
-  return getCmsBackend() === "supabase" ? getSupabaseSettings() : getLocalSettings();
+  if (getCmsBackend() !== "supabase") return getLocalSettings();
+  // Keep public pages deployable while Supabase server credentials are being
+  // configured. The Admin UI separately reports backendConfigured=false.
+  return isSupabaseCmsConfigured() ? getSupabaseSettings() : Promise.resolve({ ...defaultSiteSettings });
 }
 
 export function updateSiteSettings(value: unknown) {

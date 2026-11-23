@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { contentCategories, contentStatuses, type ContentCategory, type ContentPost, type ContentPostInput } from "@/lib/cms-types";
-import { getCmsBackend, getSupabaseCmsClient, getSupabasePublicClient, isAllowedSupabaseImageUrl, isReadOnlyServerlessRuntime } from "@/lib/supabase-server";
+import { getCmsBackend, getSupabaseCmsClient, getSupabasePublicClient, isAllowedSupabaseImageUrl, isReadOnlyServerlessRuntime, isSupabasePublicConfigured } from "@/lib/supabase-server";
 
 type ContentDatabase = { posts: ContentPost[] };
 type ContentPostRow = {
@@ -284,11 +284,15 @@ export function getAllPosts() {
 }
 
 export function getPublishedPosts(category?: ContentCategory) {
-  return getCmsBackend() === "supabase" ? getPublishedSupabasePosts(category) : getPublishedLocalPosts(category);
+  if (getCmsBackend() !== "supabase") return getPublishedLocalPosts(category);
+  // Public pages must still prerender when a new Vercel project has not received
+  // its Supabase environment variables yet. Admin writes remain unavailable.
+  return isSupabasePublicConfigured() ? getPublishedSupabasePosts(category) : Promise.resolve([] as ContentPost[]);
 }
 
 export function getPublishedPostBySlug(slug: string) {
-  return getCmsBackend() === "supabase" ? getPublishedSupabasePostBySlug(slug) : getPublishedLocalPostBySlug(slug);
+  if (getCmsBackend() !== "supabase") return getPublishedLocalPostBySlug(slug);
+  return isSupabasePublicConfigured() ? getPublishedSupabasePostBySlug(slug) : Promise.resolve(null);
 }
 
 export function createPost(input: ContentPostInput) {
