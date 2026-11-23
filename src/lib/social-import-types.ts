@@ -9,3 +9,13 @@ export interface SocialImportItem {
   imageUrl: string;
   source: SocialImportSource;
 }
+
+export interface NewsLinkPreview {
+  title: string;
+  excerpt: string;
+  body: string;
+  externalUrl: string;
+  publishedAt: string;
+  image: string;
+  sourceImage: string;
+}

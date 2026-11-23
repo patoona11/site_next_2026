@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { BookOpenText, Check, ChevronLeft, FileImage, Globe2, LoaderCircle, LogOut, Newspaper, Pencil, Plus, RefreshCw, Save, Search, Settings2, ShieldCheck, Trash2, Upload, X } from "lucide-react";
 import { categoryLabels, contentCategories, type ContentPost, type ContentPostInput } from "@/lib/cms-types";
 import AdminSettingsPanel from "@/components/admin/AdminSettingsPanel";
 import SocialImportPanel from "@/components/admin/SocialImportPanel";
+import type { NewsLinkPreview } from "@/lib/social-import-types";
 
 const blankForm: ContentPostInput = {
   title: "",
@@ -114,11 +116,23 @@ export default function AdminDashboard() {
     setEditorOpen(true);
   }
 
-  function startManualPost(url: string) {
+  function startManualPost(item: NewsLinkPreview) {
     clearFeedback();
     setSection("posts");
     setEditingId(null);
-    setForm({ ...blankForm, externalUrl: url, publishedAt: dateTimeInputValue(new Date().toISOString()) });
+    setForm({
+      ...blankForm,
+      title: item.title,
+      excerpt: item.excerpt,
+      body: item.body,
+      status: "draft",
+      image: item.image,
+      externalUrl: item.externalUrl,
+      publishedAt: dateTimeInputValue(item.publishedAt),
+    });
+    setMessage(item.image
+      ? "ดึงข้อมูลและบันทึกรูปปกลง Supabase Storage แล้ว กรุณาตรวจแก้ก่อนเผยแพร่"
+      : "ดึงข้อมูลข่าวแล้ว กรุณาตรวจแก้และเลือกภาพปกก่อนเผยแพร่");
     setEditorOpen(true);
   }
 
@@ -230,7 +244,7 @@ export default function AdminDashboard() {
               <pre className="mt-5 overflow-x-auto rounded-2xl bg-black/35 p-5 text-sm leading-7 text-sky-100">ADMIN_USERNAME=admin{"\n"}ADMIN_PASSWORD=รหัสผ่านอย่างน้อย-8-ตัว{"\n"}ADMIN_SESSION_SECRET=สุ่มข้อความยาวอย่างน้อย-32-ตัว</pre>
             )
           )}
-          <a href="/" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-sky-300 hover:text-white"><ChevronLeft size={16} />กลับหน้าเว็บไซต์</a>
+          <Link href="/" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-sky-300 hover:text-white"><ChevronLeft size={16} />กลับหน้าเว็บไซต์</Link>
         </section>
       </main>
     );
@@ -246,7 +260,7 @@ export default function AdminDashboard() {
           <label className="mt-4 block text-sm font-semibold text-slate-700">รหัสผ่าน<input type="password" value={credentials.password} onChange={(event) => setCredentials((current) => ({ ...current, password: event.target.value }))} autoComplete="current-password" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500" /></label>
           {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
           <button disabled={busy} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--color-academic-navy)] px-5 py-3.5 font-semibold text-white transition hover:bg-[var(--color-academic-navy-light)] disabled:opacity-50">{busy ? <LoaderCircle className="animate-spin" size={18} /> : <ShieldCheck size={18} />}เข้าสู่ระบบ</button>
-          <a href="/" className="mt-5 flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-slate-900"><ChevronLeft size={15} />กลับหน้าเว็บไซต์</a>
+          <Link href="/" className="mt-5 flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-slate-900"><ChevronLeft size={15} />กลับหน้าเว็บไซต์</Link>
         </form>
       </main>
     );

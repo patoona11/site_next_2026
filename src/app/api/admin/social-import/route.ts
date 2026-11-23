@@ -4,6 +4,7 @@ import { contentCategories, type ContentCategory } from "@/lib/cms-types";
 import { createPost, getAllPosts, validatePostInput } from "@/lib/content-store";
 import { getSiteSettings } from "@/lib/site-settings-store";
 import { fetchSocialImportItems, isFacebookImportConfigured } from "@/lib/social-import";
+import { fetchNewsLinkPreview } from "@/lib/news-link-import";
 import type { SocialImportSource } from "@/lib/social-import-types";
 
 export const runtime = "nodejs";
@@ -37,7 +38,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   if (!await isAdminRequest(request) || !isSameOrigin(request)) return unauthorized();
   try {
-    const body = await request.json() as { action?: string; source?: unknown; itemId?: unknown; category?: unknown };
+    const body = await request.json() as { action?: string; source?: unknown; itemId?: unknown; category?: unknown; url?: unknown };
+    if (body.action === "preview-url") {
+      if (typeof body.url !== "string" || body.url.length > 2000) throw new Error("กรุณาวางลิงก์ข่าวที่ถูกต้อง");
+      return NextResponse.json({ item: await fetchNewsLinkPreview(body.url) });
+    }
     const source = getSource(body.source);
     const items = await sourceItems(source);
     if (body.action === "preview") return NextResponse.json({ items });

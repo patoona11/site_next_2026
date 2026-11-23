@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Check, ExternalLink, FileInput, LoaderCircle, RefreshCw, Rss, Share2, X } from "lucide-react";
 import { categoryLabels, contentCategories, type ContentCategory } from "@/lib/cms-types";
-import type { SocialImportItem, SocialImportSource } from "@/lib/social-import-types";
+import type { NewsLinkPreview, SocialImportItem, SocialImportSource } from "@/lib/social-import-types";
 
 type ImportStatus = {
   facebookConfigured: boolean;
@@ -13,14 +13,14 @@ type ImportStatus = {
 };
 
 async function readResponse(response: Response) {
-  const data = await response.json().catch(() => ({})) as ImportStatus & { error?: string; items?: SocialImportItem[] };
+  const data = await response.json().catch(() => ({})) as ImportStatus & { error?: string; items?: SocialImportItem[]; item?: NewsLinkPreview };
   if (!response.ok) throw new Error(data.error || "ทำรายการไม่สำเร็จ");
   return data;
 }
 
 export default function SocialImportPanel({ onImported, onManualCreate, onOpenSettings }: {
   onImported: () => Promise<void>;
-  onManualCreate: (url: string) => void;
+  onManualCreate: (item: NewsLinkPreview) => void;
   onOpenSettings: () => void;
 }) {
   const [status, setStatus] = useState<ImportStatus | null>(null);
@@ -31,6 +31,7 @@ export default function SocialImportPanel({ onImported, onManualCreate, onOpenSe
   const [importingId, setImportingId] = useState("");
   const [importedIds, setImportedIds] = useState<string[]>([]);
   const [manualUrl, setManualUrl] = useState("");
+  const [extracting, setExtracting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -84,14 +85,26 @@ export default function SocialImportPanel({ onImported, onManualCreate, onOpenSe
     }
   }
 
-  function manualImport(event: FormEvent) {
+  async function manualImport(event: FormEvent) {
     event.preventDefault();
+    setMessage("");
+    setError("");
+    setExtracting(true);
     try {
       const url = new URL(manualUrl);
-      if (!["facebook.com", "www.facebook.com", "m.facebook.com"].includes(url.hostname)) throw new Error();
-      onManualCreate(url.toString());
-    } catch {
-      setError("กรุณาวางลิงก์โพสต์จาก facebook.com ที่ถูกต้อง");
+      if (!["http:", "https:"].includes(url.protocol)) throw new Error("กรุณาวางลิงก์เว็บไซต์ที่ถูกต้อง");
+      const data = await readResponse(await fetch("/api/admin/social-import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "preview-url", url: url.toString() }),
+      }));
+      if (!data.item) throw new Error("ดึงข้อมูลข่าวไม่สำเร็จ");
+      setManualUrl("");
+      onManualCreate(data.item);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "ดึงข้อมูลข่าวไม่สำเร็จ");
+    } finally {
+      setExtracting(false);
     }
   }
 
@@ -119,8 +132,9 @@ export default function SocialImportPanel({ onImported, onManualCreate, onOpenSe
       </div>
 
       <form onSubmit={manualImport} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex items-center gap-3"><FileInput className="text-sky-700" size={22} /><div><h3 className="font-bold text-slate-900">วางลิงก์โพสต์ด้วยตนเอง</h3><p className="text-sm text-slate-500">ใช้ได้แม้ยังไม่มี RSS หรือ Page Token ระบบจะเปิดตัวแก้ไขข่าวพร้อมลิงก์ต้นฉบับ</p></div></div>
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row"><input type="url" value={manualUrl} onChange={(event) => setManualUrl(event.target.value)} placeholder="https://www.facebook.com/…/posts/…" className="min-w-0 flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-sky-500" /><button className="rounded-xl bg-sky-50 px-5 py-3 text-sm font-semibold text-sky-800">สร้างฉบับร่าง</button></div>
+        <div className="flex items-center gap-3"><FileInput className="text-sky-700" size={22} /><div><h3 className="font-bold text-slate-900">วางลิงก์ แล้วดึงข้อมูลข่าวอัตโนมัติ</h3><p className="text-sm text-slate-500">รองรับเว็บไซต์ข่าวและโพสต์สาธารณะ ระบบจะดึงชื่อเรื่อง คำโปรย เนื้อหา วันที่ รูปปก และลิงก์ต้นฉบับมาให้ตรวจแก้</p></div></div>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row"><input required type="url" value={manualUrl} onChange={(event) => setManualUrl(event.target.value)} placeholder="https://เว็บไซต์ต้นทาง/ข่าว/…" className="min-w-0 flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-sky-500" /><button disabled={extracting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-50 px-5 py-3 text-sm font-semibold text-sky-800 disabled:opacity-50">{extracting ? <LoaderCircle className="animate-spin" size={17} /> : <FileInput size={17} />}{extracting ? "กำลังดึงข่าว" : "ดึงข่าวมาเขียน"}</button></div>
+        <p className="mt-3 text-xs leading-5 text-slate-400">ข่าวจะเปิดในตัวแก้ไขเป็นฉบับร่างก่อนเสมอ หากเว็บไซต์ต้นทางป้องกันการดึงข้อมูล สามารถกรอกหรืออัปโหลดภาพเพิ่มเติมเองได้</p>
       </form>
 
       {items.length > 0 && <div className="space-y-4">
